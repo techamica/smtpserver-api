@@ -4,7 +4,23 @@
 	use \Exception;
 	use \CURLFile;
 
+	/**
+	* SmtpApiMailer.php
+	*
+	* Official API library for smtpserver.com
+	*
+	* @author     Techamica <is@woano.com>
+	* @copyright  2021 Techamica
+	* @license    http://www.php.net/license/3_0.txt  PHP License 3.0
+	* @version    1.0.2
+	* @link       https://github.com/techamica/smtpserver-api
+	*/
 	class SmtpApiMailer {
+		/**
+		* Declare all private data-members
+		*
+		* @access private
+		*/
 		private $target_url = "https://api.smtpserver.com/mailer/send";
 		private $timeout = 10;
 		private $api_key = null;
@@ -15,12 +31,27 @@
 		private $subject = null;
 		private $body = [ 'text' => null, 'html' => null ];
 		private $files = [];
-		public $mail_data = [];
+		private $mail_data = [];
 
+		/**
+		* Initiate object
+		*
+		* @method 	constructor
+		* @access public
+		* @param 	$api_key <client's 96 character API KEY>
+		*/
 		public function __construct($api_key) {
 			$this->api_key = $api_key;
 		}
 
+		/**
+		* Set To emails
+		*
+		* @method 	setTo
+		* @access public
+		* @param 	$to_list <an Email or array of Emails or array of Emails & Names>
+		* @return 	$this
+		*/
 		public function setTo($to_list) {
 			if(is_array($to_list)) {
 				if(sizeof($to_list)===0)
@@ -58,6 +89,15 @@
 			return $this;
 		}
 
+		/**
+		* Set From email
+		*
+		* @method 	setFrom
+		* @access public
+		* @param 	$from_mail <from email>
+		* @param 	$from_name <from name> #OPTIONAL
+		* @return 	$this
+		*/
 		public function setFrom($from_mail, $from_name='') {
 			if(is_string($from_mail)) {
 				if(filter_var($from_mail, FILTER_VALIDATE_EMAIL))
@@ -74,6 +114,14 @@
 			return $this;
 		}
 
+		/**
+		* Set Headers
+		*
+		* @method 	setHeader
+		* @access public
+		* @param 	$header_list <an array of Header names & data>
+		* @return 	$this
+		*/
 		public function setHeader($header_list) {
 			if(is_array($header_list)) {
 				if(sizeof($header_list)===0)
@@ -102,6 +150,14 @@
 			return $this;
 		}
 
+		/**
+		* Set Subject
+		*
+		* @method 	setSubject
+		* @access public
+		* @param 	$subject <subject>
+		* @return 	$this
+		*/
 		public function setSubject($subject) {
 			if(is_string($subject)) {
 				if(trim($subject)!=='')
@@ -115,6 +171,14 @@
 			return $this;
 		}
 
+		/**
+		* Set Text version of email content
+		*
+		* @method 	setText
+		* @access public
+		* @param 	$text <text version of HTML content>
+		* @return 	$this
+		*/
 		public function setText($text) {
 			if(is_string($text)) {
 				if(trim($text)!=='')
@@ -128,6 +192,14 @@
 			return $this;
 		}
 
+		/**
+		* Set HTML email content
+		*
+		* @method 	setHtml
+		* @access public
+		* @param 	$html <HTML email content>
+		* @return 	$this
+		*/
 		public function setHtml($html) {
 			if(is_string($html)) {
 				if(trim($html)!=='')
@@ -141,6 +213,14 @@
 			return $this;
 		}
 
+		/**
+		* Add file attachments to mail
+		*
+		* @method 	addFile
+		* @access public
+		* @param 	$files <a single file path or array of files with absolute path>
+		* @return 	$this
+		*/
 		public function addFile($files) {
 			if(is_array($files)) {
 				foreach($files as $fileName) {
@@ -174,7 +254,14 @@
 			return $this;
 		}
 
-		public function prepare() {
+		/**
+		* Prepare mail sending for API
+		*
+		* @method 	prepare
+		* @access private
+		* @return 	$this
+		*/
+		private function prepare() {
 			/* S T A R T: check if API KEY is valid */
 			if($this->api_key===null)
 				throw new Exception("API KEY must be a proper  string", 1);
@@ -228,6 +315,13 @@
 			return $this;
 		}
 
+		/**
+		* Push mail via API
+		*
+		* @method 	send
+		* @access private
+		* @return 	JSON
+		*/
 		private function send() {
 			try {
 				$cURL = curl_init($this->target_url);
@@ -257,6 +351,13 @@
 			}
 		}
 
+		/**
+		* Trigger mail sending
+		*
+		* @method 	sendMail
+		* @access public
+		* @return 	JSON
+		*/
 		public function sendMail() {
 			return $this->prepare()->send();
 		}
