@@ -16,13 +16,15 @@
 	* @link       https://github.com/techamica/smtpserver-api
 	*/
 	class SmtpApiMailer {
+		const max_upload_size = 26214400;
+		const api_key_length = 96;
 		/**
 		* Declare all private data-members
 		*
 		* @access private
 		*/
 		private $target_url = "https://api.smtpserver.com/mailer/send";
-		private $timeout = 10;
+		private $timeout = 20;
 		private $api_key = null;
 		private $to = [];
 		private $from = null;
@@ -32,6 +34,7 @@
 		private $body = [ 'text' => null, 'html' => null ];
 		private $files = [];
 		private $mail_data = [];
+		private $total_size = 0;
 
 		/**
 		* Initiate object
@@ -53,7 +56,7 @@
 		* @return 	$this
 		*/
 		public function setTimeout($timeout) {
-			$this->timeout = $timeout>60 ? 60 : $timeout;
+			$this->timeout = $timeout>120 ? 120 : $timeout;
 
 			return $this;
 		}
@@ -83,10 +86,14 @@
 								throw new Exception($key." name is not a proper string", 1);
 						}
 						else {
-							if(filter_var($val, FILTER_VALIDATE_EMAIL))
-								$this->to[$val] = '';
+							if(is_string($val)) {
+								if(filter_var($val, FILTER_VALIDATE_EMAIL))
+									$this->to[$val] = '';
+								else
+									throw new Exception($val." is not a proper Email", 1);
+							}
 							else
-								throw new Exception($val." is not a proper Email", 1);
+								throw new Exception($key." name is not a proper string", 1);
 						}
 					}
 				}
@@ -143,15 +150,18 @@
 				else {
 					foreach($header_list as $key=>$val) {
 						if(is_string($key)) {
-							if(is_string($val)) {
-								if(trim($val)!=='')
-									$this->header[$key] = trim($val);
+							if(trim($key)!=='') {
+								if(is_string($val)) {
+									if(trim($val)!=='')
+										$this->header[$key] = trim($val);
+									else
+										throw new Exception("Header".$key." has empty value", 1);
+								}
 								else
-									throw new Exception("Header".$key." hasempty value", 1);
-									
+									throw new Exception($key." value is not a proper string", 1);
 							}
 							else
-								throw new Exception($key." value is not a proper string", 1);
+								throw new Exception("One or more header has empty key", 1);
 						}
 						else
 							throw new Exception("One or more fields in Header is not a proper string", 1);
@@ -243,6 +253,8 @@
 							$finfo = finfo_open(FILEINFO_MIME_TYPE);
 							$finfo = finfo_file($finfo, $fileName);
 
+							$this->total_size += filesize($fileName);
+
 							$this->files[] = new CURLFile($fileName, $finfo, basename($fileName));
 						}
 						else
@@ -256,6 +268,8 @@
 				if(file_exists($files)) {
 					$finfo = finfo_open(FILEINFO_MIME_TYPE);
 					$finfo = finfo_file($finfo, $files);
+
+					$this->total_size += filesize($files);
 
 					$this->files[] = new CURLFile($files, $finfo, basename($files));
 				}
@@ -278,17 +292,17 @@
 		private function prepare() {
 			/* S T A R T: check if API KEY is valid */
 			if($this->api_key===null)
-				throw new Exception("API KEY must be a proper  string", 1);
+				throw new Exception("API KEY must be a proper string", 1);
 			elseif(is_string($this->api_key)) {
 				$this->api_key = trim($this->api_key);
 
 				if($this->api_key==='')
 					throw new Exception("API KEY cannot be empty or whitespaces", 1);
-				elseif(strlen($this->api_key)!==96)
+				elseif(strlen($this->api_key)!==self::api_key_length)
 					throw new Exception("API KEY is invalid", 1);
 			}
 			else
-				throw new Exception("API KEY must be a proper  string", 1);
+				throw new Exception("API KEY must be a proper string", 1);
 			/* E N D: check if API KEY is valid */
 
 			// validate if to mails exist
@@ -326,6 +340,9 @@
 			}
 			/* E N D: check if a valid Text/HTML was provided */
 
+			if($this->total_size>self::max_upload_size)
+				throw new Exception("Maximum upload size of ".self::max_upload_size." Bytes exceeded", 1);
+
 			return $this;
 		}
 
@@ -353,12 +370,13 @@
 				curl_setopt($cURL, CURLOPT_POSTFIELDS, array_merge($this->mail_data, $this->files));
 
 				$response = curl_exec($cURL);
+				$httpcode = curl_getinfo($cURL, CURLINFO_HTTP_CODE);
 				$header_size = curl_getinfo($cURL, CURLINFO_HEADER_SIZE);
 				$header = substr($response, 0, $header_size);
 				$body = substr($response, $header_size);
 				curl_close($cURL);
 
-				return json_decode($body, true);
+				return [ 'code' => $httpcode, 'header' => $header, 'body' => $body ];
 			}
 			catch(Exception $e) {
 				throw $e;
