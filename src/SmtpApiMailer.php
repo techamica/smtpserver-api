@@ -45,6 +45,20 @@
 		}
 
 		/**
+		* Set timeout
+		*
+		* @method 	setTimeout
+		* @access public
+		* @param 	$timeout <timeout in seconds>
+		* @return 	$this
+		*/
+		public function setTimeout($timeout) {
+			$this->timeout = $timeout>60 ? 60 : $timeout;
+
+			return $this;
+		}
+
+		/**
 		* Set To emails
 		*
 		* @method 	setTo
