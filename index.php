@@ -1,17 +1,16 @@
 <?php
 	require_once "./src/SmtpApiMailer.php";
 
-	$smtp = new Smtp\SmtpApiMailer("h42789345jn3462h523b7xgrdnrb34812rsb23h8744jt5mxgtn3478thn2187g2m7r9x1grb681dfg681237gnz2387gn8b");
+	$smtp = new Smtp\SmtpApiMailer("YOUR_API_KEY");
 
-	// $smtp->setTo('is@woano.com');
-	// $smtp->setTo('ab@woano.com');
+	$smtp->setTo('test1@test.com');
+	$smtp->setTo('test2@test.com');
 	$smtp->setTo([
-		// 'niklavs.b@gmail.com' => 'Niklavs Birins',
-		'is@woano.com' => 'Indrajit Sengupta',
-		// 'ms@woano.com'
+		'test3@test.com' => 'A Good Subscriber',
+		'test4@test.com'
 	]);
 
-	$smtp->setFrom('info@sendingmail.xyz', 'Alex Cooper');
+	$smtp->setFrom('info@test.com', 'A Good Tester');
 
 	$smtp->setSubject('Test subject for a test mail');
 
@@ -24,8 +23,8 @@
 	$smtp->setText('This is a test mail only');
 	$smtp->setHtml('<p>This is a test mail only</p>');
 
-	// $smtp->addFile('C:\Users\isg\Pictures\tenor.gif');
-	// $smtp->addFile([ 'C:\Users\isg\Pictures\tenor.gif', 'C:\Users\isg\Pictures\photo_2019-02-08_00-01-11.jpg' ]);
+	$smtp->addFile('ABSOLUTE_PATH_TO_\tenor.gif');
+	$smtp->addFile([ 'ABSOLUTE_PATH_TO_\salsa.gif', 'ABSOLUTE_PATH_TO_\photo_2019-02-08_00-01-11.jpg' ]);
 
 	$resp = $smtp->sendMail();
 
